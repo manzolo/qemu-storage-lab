@@ -25,12 +25,15 @@ source "$PROJECT_DIR/scripts/ssh-utils.sh"
 source "$PROJECT_DIR/scripts/theory.sh"
 source "$PROJECT_DIR/scripts/raid-labs.sh"
 source "$PROJECT_DIR/scripts/lvm-labs.sh"
+source "$PROJECT_DIR/scripts/zfs-labs.sh"
 source "$PROJECT_DIR/demos/demo-common.sh"
 source "$PROJECT_DIR/demos/demo-raid1.sh"
 source "$PROJECT_DIR/demos/demo-raid5.sh"
 source "$PROJECT_DIR/demos/demo-raid10.sh"
 source "$PROJECT_DIR/demos/demo-lvm.sh"
 source "$PROJECT_DIR/demos/demo-lvm-on-raid.sh"
+source "$PROJECT_DIR/demos/demo-zfs-pool.sh"
+source "$PROJECT_DIR/demos/demo-zfs-raid.sh"
 
 # ── Check for leftover VM ──
 if vm_is_running; then
@@ -48,7 +51,7 @@ show_banner() {
     cat << 'EOF'
   ╔══════════════════════════════════════════════════════╗
   ║           QEMU STORAGE LAB                           ║
-  ║       Learn RAID & LVM hands-on                      ║
+  ║    Learn RAID, LVM & ZFS hands-on                    ║
   ╚══════════════════════════════════════════════════════╝
 EOF
     echo -e "${RESET}"
@@ -66,13 +69,14 @@ menu_main() {
         echo "  3) VM Management"
         echo "  4) RAID Labs (mdadm)"
         echo "  5) LVM Labs"
-        echo "  6) Theory & Documentation"
-        echo "  7) Guided Demos (Interactive Tutorials)"
-        echo "  8) Full Reset (destroy everything)"
+        echo "  6) ZFS Labs"
+        echo "  7) Theory & Documentation"
+        echo "  8) Guided Demos (Interactive Tutorials)"
+        echo "  9) Full Reset (destroy everything)"
         echo "  0) Exit"
         hr
         echo ""
-        echo -n "  Choose [0-8]: "
+        echo -n "  Choose [0-9]: "
         read -r choice
 
         case "$choice" in
@@ -81,9 +85,10 @@ menu_main() {
             3) menu_vm ;;
             4) menu_raid ;;
             5) menu_lvm ;;
-            6) menu_theory ;;
-            7) menu_demos ;;
-            8) full_reset ;;
+            6) menu_zfs ;;
+            7) menu_theory ;;
+            8) menu_demos ;;
+            9) full_reset ;;
             0) echo ""; info "Goodbye!"; exit 0 ;;
             *) warn "Invalid option." ; sleep 1 ;;
         esac
@@ -119,8 +124,8 @@ menu_setup() {
 
         # Step 8: Verify packages
         section "Verifying Guest Packages"
-        ssh_exec_show "dpkg -l | grep -E 'mdadm|lvm2|xfsprogs' | awk '{print \$2, \$3}'" \
-            "Checking that RAID/LVM tools are installed in the VM"
+        ssh_exec_show "dpkg -l | grep -E 'mdadm|lvm2|xfsprogs|zfsutils' | awk '{print \$2, \$3}'" \
+            "Checking that RAID/LVM/ZFS tools are installed in the VM"
 
         ssh_exec_show "lsblk -o NAME,SIZE,SERIAL,TYPE" \
             "Block devices visible inside the VM"
@@ -269,6 +274,42 @@ menu_lvm() {
     done
 }
 
+# ── ZFS Labs Sub-menu ──
+menu_zfs() {
+    while true; do
+        clear
+        show_banner
+        echo -e "${BOLD}  ZFS Labs${RESET}"
+        hr
+        echo "  1) Theory: Understanding ZFS"
+        echo "  2) Create ZFS Mirror Pool"
+        echo "  3) Create ZFS RAIDZ Pool"
+        echo "  4) ZFS Datasets"
+        echo "  5) ZFS Snapshots & Rollback"
+        echo "  6) ZFS Status"
+        echo "  7) Simulate Failure & Replace Disk"
+        echo "  8) Destroy All ZFS Pools"
+        echo "  0) Back"
+        hr
+        echo ""
+        echo -n "  Choose [0-8]: "
+        read -r choice
+
+        case "$choice" in
+            1) theory_zfs ;;
+            2) zfs_lab_mirror ;;
+            3) zfs_lab_raidz ;;
+            4) zfs_lab_datasets ;;
+            5) zfs_lab_snapshots ;;
+            6) zfs_lab_status ;;
+            7) zfs_lab_replace ;;
+            8) zfs_lab_destroy ;;
+            0) return ;;
+            *) warn "Invalid option." ; sleep 1 ;;
+        esac
+    done
+}
+
 # ── Theory & Docs Sub-menu ──
 menu_theory() {
     while true; do
@@ -280,10 +321,11 @@ menu_theory() {
         echo "  2) LVM Theory"
         echo "  3) RAID + LVM Combined"
         echo "  4) Disk Naming Conventions"
+        echo "  5) ZFS Theory"
         echo "  0) Back"
         hr
         echo ""
-        echo -n "  Choose [0-4]: "
+        echo -n "  Choose [0-5]: "
         read -r choice
 
         case "$choice" in
@@ -291,6 +333,7 @@ menu_theory() {
             2) theory_lvm ;;
             3) theory_combined ;;
             4) theory_disk_naming ;;
+            5) theory_zfs ;;
             0) return ;;
             *) warn "Invalid option." ; sleep 1 ;;
         esac
@@ -309,10 +352,12 @@ menu_demos() {
         echo "  3) RAID 10 — Mirror+Stripe: create, fail, rebuild"
         echo "  4) LVM     — PV, VG, LV, resize"
         echo "  5) LVM on RAID — Production pattern"
+        echo "  6) ZFS Pool — Datasets, snapshots, rollback"
+        echo "  7) ZFS Mirror — Failure, resilver, recovery"
         echo "  0) Back"
         hr
         echo ""
-        echo -n "  Choose [0-5]: "
+        echo -n "  Choose [0-7]: "
         read -r choice
 
         case "$choice" in
@@ -321,6 +366,8 @@ menu_demos() {
             3) demo_raid10 ;;
             4) demo_lvm ;;
             5) demo_lvm_on_raid ;;
+            6) demo_zfs_pool ;;
+            7) demo_zfs_raid ;;
             0) return ;;
             *) warn "Invalid option." ; sleep 1 ;;
         esac

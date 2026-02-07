@@ -29,7 +29,7 @@ vgs_out=$(ssh_exec "sudo vgs")
 assert_contains "$vgs_out" "lab_vg" "vgs shows lab_vg"
 
 # ── 3. Create Logical Volume ──
-ssh_exec "sudo lvcreate -L 2G -n data_lv lab_vg"
+ssh_exec "sudo lvcreate -y -L 2G -n data_lv lab_vg"
 assert_ok "Create 2G LV data_lv"
 
 lvs_out=$(ssh_exec "sudo lvs")

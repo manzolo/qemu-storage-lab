@@ -31,7 +31,7 @@ assert_contains "$pvs_out" "/dev/md0" "pvs shows /dev/md0"
 ssh_exec "sudo vgcreate raid_vg /dev/md0"
 assert_ok "Create VG raid_vg"
 
-ssh_exec "sudo lvcreate -L 2G -n secure_lv raid_vg"
+ssh_exec "sudo lvcreate -y -L 2G -n secure_lv raid_vg"
 assert_ok "Create 2G LV secure_lv"
 
 lvs_out=$(ssh_exec "sudo lvs")

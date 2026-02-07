@@ -1,6 +1,6 @@
 # QEMU Storage Lab
 
-An interactive, hands-on lab for learning **mdadm RAID** and **LVM** using QEMU/KVM virtual machines.
+An interactive, hands-on lab for learning **mdadm RAID**, **LVM**, and **ZFS** using QEMU/KVM virtual machines.
 Everything runs inside a disposable VM — your host system is never touched.
 
 ## Features
@@ -8,6 +8,7 @@ Everything runs inside a disposable VM — your host system is never touched.
 - **RAID Labs** — Create, inspect, break and rebuild RAID 0, 1, 5, 10 arrays
 - **LVM Labs** — Physical Volumes, Volume Groups, Logical Volumes, live resize
 - **LVM on RAID** — Production-style architecture: RAID for redundancy + LVM for flexibility
+- **ZFS Labs** — Pools (mirror, raidz), datasets, snapshots, rollback, disk replacement
 - **Guided Demos** — Interactive step-by-step tutorials: run each command with Enter, skip with `s`, quit with `q`
 - **Theory sections** — Built-in explanations of every concept
 - **Automated test suite** — Non-interactive tests for every scenario, CI-ready
@@ -34,7 +35,7 @@ The interactive menu will guide you through setup (download Ubuntu cloud image, 
 
 ```
 Host (your machine)
- └─ QEMU/KVM VM (Ubuntu 24.04 cloud image)
+ └─ QEMU/KVM VM (Ubuntu 24.04 cloud image, 2GB RAM)
      ├─ /dev/vda  — OS disk (10G)
      ├─ /dev/vdb  — Data disk 1 (5G)
      ├─ /dev/vdc  — Data disk 2 (5G)
@@ -49,7 +50,7 @@ All data disks are disposable qcow2 images. You can destroy and recreate them at
 ```
   ╔══════════════════════════════════════════════════════╗
   ║           QEMU STORAGE LAB                           ║
-  ║       Learn RAID & LVM hands-on                      ║
+  ║    Learn RAID, LVM & ZFS hands-on                    ║
   ╚══════════════════════════════════════════════════════╝
 
   1) Setup & Installation
@@ -57,9 +58,10 @@ All data disks are disposable qcow2 images. You can destroy and recreate them at
   3) VM Management
   4) RAID Labs (mdadm)
   5) LVM Labs
-  6) Theory & Documentation
-  7) Guided Demos (Interactive Tutorials)
-  8) Full Reset (destroy everything)
+  6) ZFS Labs
+  7) Theory & Documentation
+  8) Guided Demos (Interactive Tutorials)
+  9) Full Reset (destroy everything)
   0) Exit
 ```
 
@@ -82,6 +84,17 @@ Each lab includes: create array, format, mount, write/read data, simulate failur
 | Resize | Live extend LV + resize2fs (no downtime) |
 | LVM on RAID | RAID 1 → PV → VG → LV (production pattern) |
 
+### ZFS Labs
+
+| Lab | Description |
+|-----|-------------|
+| Mirror Pool | Create a 2-disk mirror pool (like RAID 1 with checksums) |
+| RAIDZ Pool | Create a 3-disk raidz pool (like RAID 5 with checksums) |
+| Datasets | Lightweight filesystems with independent quotas and compression |
+| Snapshots | Instant COW snapshots, modify data, rollback to restore |
+| Disk Replace | Simulate failure, verify degraded access, resilver |
+| Status | Overview of pools, datasets, and snapshots |
+
 ### Guided Demos
 
 Interactive, step-by-step tutorials that explain each command before running it. The user controls execution: press **Enter** to run, **s** to skip, **q** to quit.
@@ -93,12 +106,14 @@ Interactive, step-by-step tutorials that explain each command before running it.
 | RAID 10 | Mirror+Stripe: create → write data → simulate failure → rebuild → verify integrity |
 | LVM | PV → VG → LV → filesystem → live resize → reverse cleanup |
 | LVM on RAID | Production pattern: RAID 1 → PV → VG → LV → full stack overview → cleanup |
+| ZFS Pool | Datasets, snapshots, rollback: create pool → datasets → write → snapshot → modify → rollback → verify |
+| ZFS Mirror | Failure & resilver: create mirror → write → offline disk → verify degraded → replace → resilver → verify |
 
 Each demo starts with an automatic cleanup, includes educational notes between steps, and verifies expected results.
 
 ## Cheat Sheet
 
-See [docs/cheatsheet.md](docs/cheatsheet.md) for a quick reference of all mdadm and LVM commands.
+See [docs/cheatsheet.md](docs/cheatsheet.md) for a quick reference of all mdadm, LVM, and ZFS commands.
 
 ## Test Suite
 
@@ -128,6 +143,8 @@ Automated, non-interactive tests for CI and local verification.
 | `test-raid10.sh` | Create → write → fail disk → rebuild → verify data intact |
 | `test-lvm-basic.sh` | PV → VG → LV → mount → write → extend → resize → cleanup |
 | `test-lvm-raid.sh` | RAID 1 → PV → VG → LV → mount → write → full cleanup |
+| `test-zfs-pool.sh` | Mirror pool → datasets → quota → write → snapshot → rollback → verify |
+| `test-zfs-mirror.sh` | Mirror pool → write → offline disk → verify degraded → resilver → verify data |
 
 ### CI (GitHub Actions)
 
@@ -147,7 +164,9 @@ qemu-storage-lab/
 │   ├── demo-raid5.sh           # RAID 5 guided tutorial
 │   ├── demo-raid10.sh          # RAID 10 guided tutorial
 │   ├── demo-lvm.sh             # LVM guided tutorial
-│   └── demo-lvm-on-raid.sh     # LVM on RAID guided tutorial
+│   ├── demo-lvm-on-raid.sh     # LVM on RAID guided tutorial
+│   ├── demo-zfs-pool.sh        # ZFS pool + datasets + snapshots tutorial
+│   └── demo-zfs-raid.sh        # ZFS mirror + failure + resilver tutorial
 ├── scripts/
 │   ├── config.sh               # Configuration, colors, logging utilities
 │   ├── disk-manager.sh         # Create/delete/list qcow2 disk images
@@ -155,6 +174,7 @@ qemu-storage-lab/
 │   ├── ssh-utils.sh            # SSH connection helpers
 │   ├── raid-labs.sh            # RAID 0, 1, 5, 10 labs
 │   ├── lvm-labs.sh             # LVM labs (basic, resize, on RAID)
+│   ├── zfs-labs.sh             # ZFS labs (mirror, raidz, datasets, snapshots)
 │   └── theory.sh               # Theory & documentation sections
 ├── tests/
 │   ├── test-common.sh          # Shared test framework
@@ -164,6 +184,8 @@ qemu-storage-lab/
 │   ├── test-raid10.sh          # RAID 10 tests
 │   ├── test-lvm-basic.sh       # Basic LVM tests
 │   ├── test-lvm-raid.sh        # LVM on RAID tests
+│   ├── test-zfs-pool.sh        # ZFS pool + datasets + snapshots tests
+│   ├── test-zfs-mirror.sh      # ZFS mirror + failure + resilver tests
 │   └── run-all-tests.sh        # Test runner
 ├── disks/                      # Generated disk images (gitignored)
 ├── cloud-init/                 # Generated cloud-init files
@@ -177,7 +199,7 @@ qemu-storage-lab/
 Create a `lab.conf` file to override defaults:
 
 ```bash
-VM_RAM=2048            # VM memory in MB (default: 1024)
+VM_RAM=4096            # VM memory in MB (default: 2048)
 VM_CPUS=2             # VM CPUs (default: 1)
 VM_SSH_PORT=2222      # SSH port forwarding (default: 2222)
 DATA_DISK_COUNT=4     # Number of data disks (default: 4)

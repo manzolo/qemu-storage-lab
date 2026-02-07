@@ -1,4 +1,4 @@
-# Storage Cheat Sheet — mdadm RAID & LVM
+# Storage Cheat Sheet — mdadm RAID, LVM & ZFS
 
 Quick reference for all the commands used in this lab.
 
@@ -128,6 +128,115 @@ lvremove /dev/my_vg/data_lv
 
 ---
 
+## ZFS — Combined Volume Manager + Filesystem
+
+### Create Pools
+
+```bash
+# Mirror pool (like RAID 1) — 2 disks, survives 1 failure
+zpool create tank mirror /dev/vdb /dev/vdc
+
+# RAIDZ pool (like RAID 5) — 3+ disks, survives 1 failure
+zpool create datapool raidz /dev/vdb /dev/vdc /dev/vdd
+
+# RAIDZ2 pool (like RAID 6) — 4+ disks, survives 2 failures
+zpool create datapool raidz2 /dev/vdb /dev/vdc /dev/vdd /dev/vde
+
+# Stripe pool (like RAID 0) — no redundancy
+zpool create fast /dev/vdb /dev/vdc
+```
+
+### Pool Status & Management
+
+```bash
+# List all pools
+zpool list
+
+# Detailed pool health
+zpool status
+zpool status tank
+
+# Verbose status with checksum errors
+zpool status -v tank
+
+# Run integrity scrub (verify all checksums)
+zpool scrub tank
+
+# Pool I/O statistics
+zpool iostat tank 1
+```
+
+### Datasets
+
+```bash
+# Create dataset (auto-mounted at /tank/data)
+zfs create tank/data
+zfs create tank/logs
+
+# List all datasets
+zfs list
+zfs list -r tank                 # recursive
+
+# Set properties
+zfs set quota=2G tank/data       # limit space usage
+zfs set compression=lz4 tank/logs # enable compression
+zfs set mountpoint=/mydata tank/data  # custom mount point
+
+# View properties
+zfs get quota,compression,mountpoint tank/data
+zfs get all tank/data
+
+# Destroy dataset
+zfs destroy tank/data
+```
+
+### Snapshots & Rollback
+
+```bash
+# Create snapshot (instant, zero-cost)
+zfs snapshot tank/data@before-upgrade
+zfs snapshot -r tank@backup      # recursive (all child datasets)
+
+# List snapshots
+zfs list -t snapshot
+zfs list -t snapshot -r tank     # recursive
+
+# Rollback to snapshot (instant)
+zfs rollback tank/data@before-upgrade
+
+# Destroy snapshot
+zfs destroy tank/data@before-upgrade
+```
+
+### Disk Failure & Recovery
+
+```bash
+# Offline a disk (simulate failure)
+zpool offline tank /dev/vdc
+
+# Bring disk back online
+zpool online tank /dev/vdc
+
+# Replace a disk with a new one
+zpool replace tank /dev/vdc /dev/vdd
+
+# Check resilver/rebuild status
+zpool status tank
+```
+
+### Destroy
+
+```bash
+# Destroy a pool (removes everything)
+zpool destroy tank
+zpool destroy -f tank            # force
+
+# Clear disk labels
+wipefs -a /dev/vdb /dev/vdc
+```
+
+---
+
 ## Filesystem Operations
 
 ```bash
@@ -206,6 +315,28 @@ mkfs.ext4 /dev/secure_vg/db_lv
 mount /dev/secure_vg/db_lv /mnt/database
 ```
 
+### Full ZFS Setup (Mirror + Datasets + Snapshot)
+
+```bash
+# 1. Create mirror pool
+zpool create tank mirror /dev/vdb /dev/vdc
+
+# 2. Create datasets
+zfs create tank/data
+zfs create tank/logs
+zfs set quota=5G tank/data
+zfs set compression=lz4 tank/logs
+
+# 3. Use it (auto-mounted)
+echo "hello" > /tank/data/file.txt
+
+# 4. Snapshot before risky change
+zfs snapshot tank/data@safe-point
+
+# 5. Oops, rollback
+zfs rollback tank/data@safe-point
+```
+
 ### Full Cleanup (reverse order)
 
 ```bash
@@ -220,6 +351,10 @@ pvremove /dev/md0
 # Stop RAID
 mdadm --stop /dev/md0
 mdadm --zero-superblock /dev/vdb /dev/vdc
+
+# Destroy ZFS (if used)
+zpool destroy -f tank
+wipefs -a /dev/vdb /dev/vdc /dev/vdd /dev/vde
 ```
 
 ---
@@ -232,6 +367,32 @@ mdadm --zero-superblock /dev/vdb /dev/vdc
 | 1 | 2 | 1 × disk | 1 failure | Fast | Normal | OS, boot drives |
 | 5 | 3 | (N-1) × disk | 1 failure | Fast | Slower | File servers, NAS |
 | 10 | 4 | N/2 × disk | 1 per pair | Fastest | Fast | Databases |
+
+---
+
+## ZFS Pool Type Comparison
+
+| Type | Min Disks | Capacity | Redundancy | Equivalent | Use Case |
+|------|-----------|----------|------------|------------|----------|
+| stripe | 1 | N × disk | None | RAID 0 | Temp data |
+| mirror | 2 | 1 × disk | 1+ failure | RAID 1 | OS, databases |
+| raidz | 3 | (N-1) × disk | 1 failure | RAID 5 | File servers, NAS |
+| raidz2 | 4 | (N-2) × disk | 2 failures | RAID 6 | Critical data |
+
+---
+
+## mdadm+LVM vs ZFS
+
+| Feature | mdadm + LVM + ext4 | ZFS |
+|---------|--------------------|----|
+| RAID | mdadm | Built-in (mirror/raidz) |
+| Volume management | LVM | Built-in (pools/datasets) |
+| Filesystem | ext4/xfs | Built-in |
+| Snapshots | LVM snapshots | Native COW (instant) |
+| Data checksums | No | Yes (every block) |
+| Self-healing | No | Yes (with redundancy) |
+| Commands | mdadm + pv/vg/lv + mkfs | zpool + zfs |
+| RAM usage | Low | Higher (ARC cache) |
 
 ---
 

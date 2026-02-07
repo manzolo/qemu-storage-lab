@@ -181,6 +181,21 @@ cleanup_lvm() {
     info "LVM cleanup done."
 }
 
+# cleanup_zfs — destroy all ZFS pools, wipefs on data disks
+cleanup_zfs() {
+    info "Cleaning up ZFS pools..."
+    local pools
+    pools=$(ssh_exec "sudo zpool list -H -o name 2>/dev/null || true" 2>/dev/null || true)
+    if [[ -n "$pools" ]]; then
+        while IFS= read -r pool; do
+            [[ -z "$pool" ]] && continue
+            ssh_exec "sudo zpool destroy -f ${pool} 2>/dev/null || true" 2>/dev/null || true
+        done <<< "$pools"
+    fi
+    ssh_exec "sudo wipefs -a /dev/vdb /dev/vdc /dev/vdd /dev/vde 2>/dev/null || true" 2>/dev/null || true
+    info "ZFS cleanup done."
+}
+
 # ── VM setup / teardown ──
 
 setup_vm() {

@@ -60,7 +60,7 @@ EOF
     ssh_exec_show "sudo vgs" \
         "Verify VG — notice the combined size of both disks"
 
-    ssh_exec_show "sudo lvcreate -L 2G -n data_lv lab_vg" \
+    ssh_exec_show "sudo lvcreate -y -L 2G -n data_lv lab_vg" \
         "Step 4: Create a 2GB Logical Volume named 'data_lv'"
 
     ssh_exec_show "sudo lvs" \
@@ -162,7 +162,7 @@ EOF
     ssh_exec_show "sudo vgcreate raid_vg /dev/md0" \
         "Step 4: Create VG on the RAID-backed PV"
 
-    ssh_exec_show "sudo lvcreate -L 2G -n secure_lv raid_vg" \
+    ssh_exec_show "sudo lvcreate -y -L 2G -n secure_lv raid_vg" \
         "Step 5: Create a 2GB LV"
 
     ssh_exec_show "sudo mkfs.ext4 /dev/raid_vg/secure_lv" \

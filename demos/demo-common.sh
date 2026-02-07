@@ -106,6 +106,16 @@ demo_ensure_vm() {
 demo_cleanup_start() {
     echo -e "  ${DIM}Cleaning up environment...${RESET}"
 
+    # Destroy ZFS pools first (before touching disks)
+    local pools
+    pools=$(ssh_exec "sudo zpool list -H -o name 2>/dev/null || true" 2>/dev/null || true)
+    if [[ -n "$pools" ]]; then
+        while IFS= read -r pool; do
+            [[ -z "$pool" ]] && continue
+            ssh_exec "sudo zpool destroy -f ${pool} 2>/dev/null || true" 2>/dev/null || true
+        done <<< "$pools"
+    fi
+
     # Unmount everything
     ssh_exec "sudo umount /mnt/raid* 2>/dev/null || true" 2>/dev/null || true
     ssh_exec "sudo umount /mnt/lvm-data /mnt/raid-lvm 2>/dev/null || true" 2>/dev/null || true
@@ -146,6 +156,9 @@ demo_cleanup_start() {
 
     # Zero superblocks
     ssh_exec "sudo mdadm --zero-superblock /dev/vdb /dev/vdc /dev/vdd /dev/vde 2>/dev/null || true" 2>/dev/null || true
+
+    # Wipe disk labels (ZFS, LVM, mdadm)
+    ssh_exec "sudo wipefs -a /dev/vdb /dev/vdc /dev/vdd /dev/vde 2>/dev/null || true" 2>/dev/null || true
 
     echo -e "  ${GREEN}✓${RESET} Environment clean"
     echo ""

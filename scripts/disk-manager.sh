@@ -98,6 +98,7 @@ packages:
   - lvm2
   - xfsprogs
   - e2fsprogs
+  - zfsutils-linux
 
 runcmd:
   - systemctl enable ssh

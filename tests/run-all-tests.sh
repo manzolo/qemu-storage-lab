@@ -45,6 +45,8 @@ TESTS=(
     "test-raid10.sh"
     "test-lvm-basic.sh"
     "test-lvm-raid.sh"
+    "test-zfs-pool.sh"
+    "test-zfs-mirror.sh"
 )
 
 # ── Results tracking ──

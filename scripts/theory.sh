@@ -216,6 +216,119 @@ EOF
     pause
 }
 
+# ── ZFS Theory ──
+theory_zfs() {
+    section "ZFS Theory — The Combined Filesystem + Volume Manager"
+
+    cat << 'EOF'
+  ZFS combines volume management, RAID, and the filesystem into a
+  single integrated tool. Unlike the traditional mdadm + LVM + ext4
+  stack, ZFS handles everything in one layer.
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │                      ZFS Architecture                            │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  Physical Disks                                                  │
+  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐                          │
+  │  │ vdb  │  │ vdc  │  │ vdd  │  │ vde  │                          │
+  │  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘                          │
+  │     └────┬────┘         └────┬────┘                              │
+  │          ▼                   ▼                                   │
+  │    ┌──────────┐        ┌──────────┐                              │
+  │    │   vdev   │        │   vdev   │   Virtual Devices (vdevs)    │
+  │    │ (mirror) │        │ (mirror) │   The redundancy unit        │
+  │    └────┬─────┘        └────┬─────┘                              │
+  │         └───────┬───────────┘                                    │
+  │                 ▼                                                │
+  │    ┌──────────────────────────┐                                  │
+  │    │     Storage Pool         │   Pool = collection of vdevs     │
+  │    │       "tank"             │   zpool create tank ...          │
+  │    └──────┬───────┬───────────┘                                  │
+  │           ▼       ▼                                              │
+  │    ┌──────────┐ ┌──────────┐                                     │
+  │    │ Dataset  │ │ Dataset  │   Datasets (lightweight, instant)   │
+  │    │tank/data │ │tank/logs │   zfs create tank/data              │
+  │    │          │ │          │   Each has own properties (quota,   │
+  │    │ (auto    │ │ (auto    │   compression, mountpoint)          │
+  │    │ mounted) │ │ mounted) │                                     │
+  │    └──────────┘ └──────────┘                                     │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Pool Types (vdev configurations)                                │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  mirror     Two+ disks with identical data (like RAID 1)         │
+  │             zpool create tank mirror vdb vdc                     │
+  │             Capacity: 1× disk size                               │
+  │                                                                  │
+  │  raidz      Striping + single parity (like RAID 5)               │
+  │             zpool create tank raidz vdb vdc vdd                  │
+  │             Capacity: (N-1)× disk size   Min: 3 disks            │
+  │                                                                  │
+  │  raidz2     Striping + double parity (like RAID 6)               │
+  │             zpool create tank raidz2 vdb vdc vdd vde             │
+  │             Capacity: (N-2)× disk size   Min: 4 disks            │
+  │                                                                  │
+  │  stripe     No redundancy (like RAID 0)                          │
+  │             zpool create tank vdb vdc                            │
+  │             Capacity: N× disk size                               │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Datasets — Lightweight Filesystems                              │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  Datasets are like subdirectories with superpowers:              │
+  │  ✓  Instant creation (no pre-allocation)                         │
+  │  ✓  Hierarchical (tank/data, tank/data/backups)                  │
+  │  ✓  Independent properties: quota, compression, mountpoint       │
+  │  ✓  Auto-mounted at creation                                     │
+  │                                                                  │
+  │  zfs create tank/data                                            │
+  │  zfs set quota=2G tank/data                                      │
+  │  zfs set compression=lz4 tank/data                               │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Snapshots — Instant, Zero-Cost Backups                          │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  ZFS uses Copy-On-Write (COW): data is never overwritten.        │
+  │  Snapshots capture the state at a point in time — instantly.     │
+  │                                                                  │
+  │  zfs snapshot tank/data@before-upgrade                           │
+  │  zfs rollback tank/data@before-upgrade     ← instant undo!       │
+  │  zfs list -t snapshot                      ← list snapshots      │
+  │                                                                  │
+  │  Timeline:                                                       │
+  │  ──[write]──[snapshot@v1]──[modify]──[rollback@v1]──             │
+  │        ▲                                     │                   │
+  │        └─────────────────────────────────────┘                   │
+  │              data returns to snapshot state                      │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Comparison: Traditional Stack vs ZFS                            │
+  ├──────────────────┬──────────────────┬────────────────────────────┤
+  │                  │ mdadm+LVM+ext4   │ ZFS                        │
+  ├──────────────────┼──────────────────┼────────────────────────────┤
+  │  RAID            │ mdadm            │ Built-in (mirror/raidz)    │
+  │  Volume mgmt     │ LVM              │ Built-in (pools/datasets)  │
+  │  Filesystem      │ ext4/xfs         │ Built-in                   │
+  │  Snapshots       │ LVM snapshots    │ Native COW (instant)       │
+  │  Data integrity  │ None             │ Checksums on all data      │
+  │  Self-healing    │ No               │ Yes (with redundancy)      │
+  │  Complexity      │ 3 separate tools │ 2 commands: zpool + zfs    │
+  │  Flexibility     │ High             │ Moderate                   │
+  │  RAM usage       │ Low              │ Higher (ARC cache)         │
+  └──────────────────┴──────────────────┴────────────────────────────┘
+EOF
+
+    pause
+}
+
 # ── Disk naming conventions ──
 theory_disk_naming() {
     section "Linux Disk Naming Conventions"

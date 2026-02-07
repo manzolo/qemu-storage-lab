@@ -16,7 +16,7 @@ MONITOR_SOCK="$LAB_DIR/vm.sock"
 LOG_FILE="$LOGS_DIR/lab-$(date +%Y%m%d-%H%M%S).log"
 
 # ── Defaults ──
-VM_RAM="${VM_RAM:-1024}"
+VM_RAM="${VM_RAM:-2048}"
 VM_CPUS="${VM_CPUS:-1}"
 VM_SSH_PORT="${VM_SSH_PORT:-2222}"
 DATA_DISK_COUNT="${DATA_DISK_COUNT:-4}"
