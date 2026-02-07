@@ -36,12 +36,12 @@ theory_raid() {
   │  RAID 1 — Mirroring                                         │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
-  │    Disk 1        Disk 2                                     │
-  │  ┌────────┐    ┌────────┐                                   │
-  │  │ Block 1│    │ Block 1│    Identical copies on each disk  │
-  │  │ Block 2│    │ Block 2│    ✓ Survives 1 disk failure      │
-  │  │ Block 3│    │ Block 3│    ✗ 50% capacity overhead        │
-  │  └────────┘    └────────┘    Capacity: 1 × disk_size        │
+  │     Disk 1        Disk 2                                    │
+  │  ┌─────────┐    ┌─────────┐                                 │
+  │  │ Block 1 │    │ Block 1 │    Identical copies on each disk│
+  │  │ Block 2 │    │ Block 2 │    ✓ Survives 1 disk failure    │
+  │  │ Block 3 │    │ Block 3 │    ✗ 50% capacity overhead      │
+  │  └─────────┘    └─────────┘    Capacity: 1 × disk_size      │
   │                                                             │
   │  Use: OS drives, critical data, database logs               │
   └─────────────────────────────────────────────────────────────┘
@@ -52,9 +52,9 @@ theory_raid() {
   │                                                             │
   │    Disk 1        Disk 2        Disk 3                       │
   │  ┌────────┐    ┌────────┐    ┌────────┐                     │
-  │  │ Data A │    │ Data B │    │Parity  │  Parity rotates     │
-  │  │ Data D │    │Parity  │    │ Data E │  across all disks   │
-  │  │Parity  │    │ Data G │    │ Data H │                     │
+  │  │ Data A │    │ Data B │    │ Parity │  Parity rotates     │
+  │  │ Data D │    │ Parity │    │ Data E │  across all disks   │
+  │  │ Parity │    │ Data G │    │ Data H │                     │
   │  └────────┘    └────────┘    └────────┘                     │
   │                                                             │
   │  ✓ Survives 1 disk failure    Min: 3 disks                  │
