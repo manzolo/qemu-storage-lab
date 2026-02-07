@@ -19,35 +19,35 @@ theory_raid() {
   for performance, redundancy, or both.
 
   ┌─────────────────────────────────────────────────────────────┐
-  │  RAID 0 — Striping (no redundancy)                         │
+  │  RAID 0 — Striping (no redundancy)                          │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
   │    Disk 1        Disk 2                                     │
   │  ┌────────┐    ┌────────┐                                   │
   │  │ Block 1│    │ Block 2│    Data is split across disks     │
   │  │ Block 3│    │ Block 4│    ✓ 2x read/write speed          │
-  │  │ Block 5│    │ Block 6│    ✗ ANY disk failure = ALL lost   │
+  │  │ Block 5│    │ Block 6│    ✗ ANY disk failure = ALL lost  │
   │  └────────┘    └────────┘    Capacity: N × disk_size        │
   │                                                             │
   │  Use: Temporary data, caches, scratch space                 │
   └─────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────────────────────────────────────────┐
-  │  RAID 1 — Mirroring                                        │
+  │  RAID 1 — Mirroring                                         │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
   │    Disk 1        Disk 2                                     │
   │  ┌────────┐    ┌────────┐                                   │
   │  │ Block 1│    │ Block 1│    Identical copies on each disk  │
-  │  │ Block 2│    │ Block 2│    ✓ Survives 1 disk failure       │
-  │  │ Block 3│    │ Block 3│    ✗ 50% capacity overhead         │
+  │  │ Block 2│    │ Block 2│    ✓ Survives 1 disk failure      │
+  │  │ Block 3│    │ Block 3│    ✗ 50% capacity overhead        │
   │  └────────┘    └────────┘    Capacity: 1 × disk_size        │
   │                                                             │
   │  Use: OS drives, critical data, database logs               │
   └─────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────────────────────────────────────────┐
-  │  RAID 5 — Striping with Distributed Parity                 │
+  │  RAID 5 — Striping with Distributed Parity                  │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
   │    Disk 1        Disk 2        Disk 3                       │
@@ -57,40 +57,40 @@ theory_raid() {
   │  │Parity  │    │ Data G │    │ Data H │                     │
   │  └────────┘    └────────┘    └────────┘                     │
   │                                                             │
-  │  ✓ Survives 1 disk failure    Min: 3 disks                 │
-  │  ✓ Good balance of speed/redundancy                        │
-  │  Capacity: (N-1) × disk_size                               │
-  │  Use: General-purpose file/app servers                     │
+  │  ✓ Survives 1 disk failure    Min: 3 disks                  │
+  │  ✓ Good balance of speed/redundancy                         │
+  │  Capacity: (N-1) × disk_size                                │
+  │  Use: General-purpose file/app servers                      │
   └─────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────────────────────────────────────────┐
-  │  RAID 10 — Mirrored Stripes (RAID 1+0)                    │
+  │  RAID 10 — Mirrored Stripes (RAID 1+0)                      │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
   │   Mirror 1           Mirror 2                               │
-  │  ┌──────┬──────┐   ┌──────┬──────┐                         │
-  │  │Disk 1│Disk 2│   │Disk 3│Disk 4│   First mirror, then   │
-  │  │ A  A │ A  A │   │ B  B │ B  B │   stripe across        │
-  │  │ C  C │ C  C │   │ D  D │ D  D │   mirror pairs         │
-  │  └──────┴──────┘   └──────┴──────┘                         │
+  │  ┌──────┬──────┐   ┌──────┬──────┐                          │
+  │  │Disk 1│Disk 2│   │Disk 3│Disk 4│   First mirror, then     │
+  │  │ A  A │ A  A │   │ B  B │ B  B │   stripe across          │
+  │  │ C  C │ C  C │   │ D  D │ D  D │   mirror pairs           │
+  │  └──────┴──────┘   └──────┴──────┘                          │
   │                                                             │
-  │  ✓ Survives 1 failure per mirror pair    Min: 4 disks      │
-  │  ✓ Best performance of redundant levels                    │
-  │  ✗ 50% capacity overhead                                   │
-  │  Capacity: (N/2) × disk_size                               │
-  │  Use: Databases, high-performance workloads                │
+  │  ✓ Survives 1 failure per mirror pair    Min: 4 disks       │
+  │  ✓ Best performance of redundant levels                     │
+  │  ✗ 50% capacity overhead                                    │
+  │  Capacity: (N/2) × disk_size                                │
+  │  Use: Databases, high-performance workloads                 │
   └─────────────────────────────────────────────────────────────┘
 
   ┌─────────────────────────────────────────────────────────────┐
-  │  Comparison Table                                          │
-  ├──────────┬─────────┬────────────┬──────────┬───────────────┤
-  │  Level   │Min Disks│ Redundancy │ Capacity │ Performance   │
-  ├──────────┼─────────┼────────────┼──────────┼───────────────┤
-  │  RAID 0  │    2    │    None    │   N×D    │ Excellent     │
-  │  RAID 1  │    2    │   1 disk   │   1×D    │ Good read     │
-  │  RAID 5  │    3    │   1 disk   │ (N-1)×D  │ Good          │
-  │  RAID 10 │    4    │ 1 per pair │ (N/2)×D  │ Excellent     │
-  └──────────┴─────────┴────────────┴──────────┴───────────────┘
+  │  Comparison Table                                           │
+  ├──────────┬─────────┬────────────┬──────────┬────────────────┤
+  │  Level   │Min Disks│ Redundancy │ Capacity │ Performance    │
+  ├──────────┼─────────┼────────────┼──────────┼────────────────┤
+  │  RAID 0  │    2    │    None    │   N×D    │ Excellent      │
+  │  RAID 1  │    2    │   1 disk   │   1×D    │ Good read      │
+  │  RAID 5  │    3    │   1 disk   │ (N-1)×D  │ Good           │
+  │  RAID 10 │    4    │ 1 per pair │ (N/2)×D  │ Excellent      │
+  └──────────┴─────────┴────────────┴──────────┴────────────────┘
   D = size of one disk, N = number of disks
 EOF
 
@@ -106,20 +106,20 @@ theory_lvm() {
   It allows flexible disk management: resize, snapshot, span across disks.
 
   ┌─────────────────────────────────────────────────────────────────┐
-  │                     LVM Architecture                           │
+  │                     LVM Architecture                            │
   ├─────────────────────────────────────────────────────────────────┤
   │                                                                 │
   │  Physical Disks/Partitions                                      │
-  │  ┌──────┐  ┌──────┐  ┌──────┐                                  │
-  │  │/dev/ │  │/dev/ │  │/dev/ │                                  │
-  │  │ vdb  │  │ vdc  │  │ vdd  │    ← Real hardware               │
-  │  └──┬───┘  └──┬───┘  └──┬───┘                                  │
+  │  ┌──────┐  ┌──────┐  ┌──────┐                                   │
+  │  │/dev/ │  │/dev/ │  │/dev/ │                                   │
+  │  │ vdb  │  │ vdc  │  │ vdd  │    ← Real hardware                │
+  │  └──┬───┘  └──┬───┘  └──┬───┘                                   │
   │     │         │         │                                       │
   │     ▼         ▼         ▼                                       │
-  │  ┌──────┐  ┌──────┐  ┌──────┐                                  │
-  │  │  PV  │  │  PV  │  │  PV  │    ← Physical Volumes            │
+  │  ┌──────┐  ┌──────┐  ┌──────┐                                   │
+  │  │  PV  │  │  PV  │  │  PV  │    ← Physical Volumes             │
   │  │      │  │      │  │      │      (pvcreate /dev/vdX)          │
-  │  └──┬───┘  └──┬───┘  └──┬───┘                                  │
+  │  └──┬───┘  └──┬───┘  └──┬───┘                                   │
   │     │         │         │                                       │
   │     └─────────┼─────────┘                                       │
   │               ▼                                                 │
@@ -127,8 +127,8 @@ theory_lvm() {
   │  │     Volume Group (VG)  │       ← Pool of storage             │
   │  │      "my_vg"           │         (vgcreate my_vg PV PV...)   │
   │  │  ┌─────────────────┐   │                                     │
-  │  │  │  Free Extents    │   │       Divided into fixed-size      │
-  │  │  │  ████████░░░░░░  │   │       Physical Extents (PE)        │
+  │  │  │  Free Extents   │   │        Divided into fixed-size      │
+  │  │  │  ████████░░░░░░ │   │        Physical Extents (PE)        │
   │  │  └─────────────────┘   │       (default 4MB each)            │
   │  └───────┬────────┬───────┘                                     │
   │          │        │                                             │
@@ -180,17 +180,17 @@ theory_combined() {
   │            The Storage Stack                           │
   ├────────────────────────────────────────────────────────┤
   │                                                        │
-  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐               │
-  │  │ vdb  │  │ vdc  │  │ vdd  │  │ vde  │  Physical     │
-  │  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘  Disks       │
+  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐                │
+  │  │ vdb  │  │ vdc  │  │ vdd  │  │ vde  │  Physical      │
+  │  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘  Disks         │
   │     └────┬─────┘        └────┬─────┘                   │
-  │          ▼                   ▼                          │
+  │          ▼                   ▼                         │
   │    ┌──────────┐        ┌──────────┐                    │
   │    │  md0     │        │  md1     │   RAID Arrays      │
   │    │ (RAID 1) │        │ (RAID 1) │   (redundancy)     │
   │    └────┬─────┘        └────┬─────┘                    │
   │         └───────┬───────────┘                          │
-  │                 ▼                                       │
+  │                 ▼                                      │
   │    ┌──────────────────────┐                            │
   │    │  Volume Group "vg0"  │        LVM VG              │
   │    │  (PV: md0 + md1)    │        (flexibility)        │
@@ -225,24 +225,24 @@ theory_disk_naming() {
   │  Device Naming                                              │
   ├─────────────────────────────────────────────────────────────┤
   │                                                             │
-  │  /dev/sdX    — SCSI/SATA disks (sda, sdb, sdc, ...)       │
-  │  /dev/vdX    — VirtIO disks (vda, vdb, vdc, ...)           │
-  │  /dev/nvmeXnY — NVMe drives                                │
-  │  /dev/mdX    — Software RAID arrays (md0, md1, ...)        │
+  │  /dev/sdX    — SCSI/SATA disks (sda, sdb, sdc, ...)         │
+  │  /dev/vdX    — VirtIO disks (vda, vdb, vdc, ...)            │
+  │  /dev/nvmeXnY — NVMe drives                                 │
+  │  /dev/mdX    — Software RAID arrays (md0, md1, ...)         │
   │                                                             │
-  │  In this lab (VirtIO):                                     │
-  │  ─────────────────────                                     │
-  │  /dev/vda  → OS disk (Ubuntu system)                       │
-  │  /dev/vdb  → Data disk 1  (serial: DISK-DATA01)            │
-  │  /dev/vdc  → Data disk 2  (serial: DISK-DATA02)            │
-  │  /dev/vdd  → Data disk 3  (serial: DISK-DATA03)            │
-  │  /dev/vde  → Data disk 4  (serial: DISK-DATA04)            │
+  │  In this lab (VirtIO):                                      │
+  │  ─────────────────────                                      │
+  │  /dev/vda  → OS disk (Ubuntu system)                        │
+  │  /dev/vdb  → Data disk 1  (serial: DISK-DATA01)             │
+  │  /dev/vdc  → Data disk 2  (serial: DISK-DATA02)             │
+  │  /dev/vdd  → Data disk 3  (serial: DISK-DATA03)             │
+  │  /dev/vde  → Data disk 4  (serial: DISK-DATA04)             │
   │                                                             │
-  │  Useful commands:                                          │
+  │  Useful commands:                                           │
   │    lsblk                         — List block devices       │
-  │    lsblk -o NAME,SIZE,SERIAL     — Show with serial numbers│
+  │    lsblk -o NAME,SIZE,SERIAL     — Show with serial numbers │
   │    cat /proc/mdstat              — RAID array status        │
-  │    pvs / vgs / lvs               — LVM status              │
+  │    pvs / vgs / lvs               — LVM status               │
   └─────────────────────────────────────────────────────────────┘
 EOF
 
