@@ -17,11 +17,9 @@ demo_raid5() {
     # Clean environment
     demo_cleanup_start
 
-    local s
-
     # Step 1: Inspect disks
-    s=$(_next_step)
-    tutor_step "$s" "Inspect available disks" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Inspect available disks" \
         "lsblk -o NAME,SIZE,SERIAL,TYPE" \
         "Let's see the available disks. RAID 5 requires at least 3 disks.
 We'll use vdb, vdc and vdd." || return 0
@@ -37,8 +35,8 @@ Tolerates the failure of 1 disk out of N."
 --level=5 means striping with distributed parity." || return 0
 
     # Step 3: Verify array
-    s=$(_next_step)
-    tutor_step "$s" "Verify array status" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify array status" \
         "cat /proc/mdstat" \
         "Check that the array is active. You may see the initial sync.
 [UUU] means all 3 disks are Up." \
@@ -59,29 +57,29 @@ Tolerates the failure of 1 disk out of N."
     done
 
     # Step 4: Array details
-    s=$(_next_step)
-    tutor_step "$s" "RAID 5 array details" \
+    _next_step
+    tutor_step "$STEP_COUNT" "RAID 5 array details" \
         "sudo mdadm --detail /dev/md0" \
         "Note the array size: about 2x a single disk's size.
 With 3 disks, 1 disk equivalent is used for parity." \
         "raid5" || return 0
 
     # Step 5: Create filesystem
-    s=$(_next_step)
-    tutor_step "$s" "Create ext4 filesystem" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Create ext4 filesystem" \
         "sudo mkfs.ext4 -F /dev/md0" \
         "We create an ext4 filesystem on the RAID 5 array.
 The array appears as a single device /dev/md0." || return 0
 
     # Step 6: Mount
-    s=$(_next_step)
-    tutor_step "$s" "Mount the filesystem" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Mount the filesystem" \
         "sudo mkdir -p /mnt/raid5 && sudo mount /dev/md0 /mnt/raid5" \
         "Mount the array on /mnt/raid5." || return 0
 
     # Step 7: Write data
-    s=$(_next_step)
-    tutor_step "$s" "Write test data" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Write test data" \
         "echo 'data protected by RAID 5 parity' | sudo tee /mnt/raid5/test.txt" \
         "We write test data. RAID 5 will distribute the data and parity
 across all 3 disks." || return 0
@@ -109,8 +107,8 @@ Missing data is reconstructed from parity on the fly."
 in degraded mode, reconstructing data from parity." || return 0
 
     # Step 10: Verify degraded
-    s=$(_next_step)
-    tutor_step "$s" "Verify degraded state" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify degraded state" \
         "cat /proc/mdstat" \
         "The array should show [UU_] — 2 disks Up, 1 failed.
 The array is degraded but operational." \
@@ -120,28 +118,28 @@ The array is degraded but operational." \
 ALL data is lost! Replace the failed disk as soon as possible."
 
     # Step 11: Verify data still OK
-    s=$(_next_step)
-    tutor_step "$s" "Verify data is still accessible" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify data is still accessible" \
         "cat /mnt/raid5/test.txt" \
         "Data is still accessible thanks to distributed parity.
 The controller reconstructs the missing disk's blocks on the fly." \
         "data protected" || return 0
 
     # Step 12: Remove failed disk
-    s=$(_next_step)
-    tutor_step "$s" "Remove failed disk" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Remove failed disk" \
         "sudo mdadm /dev/md0 --remove /dev/vdd" \
         "Remove the failed disk from the array." || return 0
 
     # Step 13: Simulate new disk
-    s=$(_next_step)
-    tutor_step "$s" "Simulate new disk (zero out)" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Simulate new disk (zero out)" \
         "sudo dd if=/dev/zero of=/dev/vdd bs=1M count=10 2>&1" \
         "Simulate a new disk by zeroing the first few MB." || return 0
 
     # Step 14: Add disk
-    s=$(_next_step)
-    tutor_step "$s" "Add new disk to array" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Add new disk to array" \
         "sudo mdadm /dev/md0 --add /dev/vdd" \
         "The rebuild will start automatically. With RAID 5 the rebuild
 is slower because it needs to recalculate parity." || return 0
@@ -170,15 +168,15 @@ When finished: [UUU] — all disks Up." || return 0
     done
 
     # Step 16: Verify integrity
-    s=$(_next_step)
-    tutor_step "$s" "Verify data integrity after rebuild" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify data integrity after rebuild" \
         "cat /mnt/raid5/test.txt" \
         "Data must be identical to what we wrote initially." \
         "data protected" || return 0
 
     # Step 17: Cleanup
-    s=$(_next_step)
-    tutor_step "$s" "Cleanup — unmount and destroy array" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Cleanup — unmount and destroy array" \
         "sudo umount /mnt/raid5 && sudo mdadm --stop /dev/md0 && sudo mdadm --zero-superblock /dev/vdb /dev/vdc /dev/vdd 2>/dev/null; echo 'Cleanup complete'" \
         "Clean up: unmount, stop the array and clear metadata." || return 0
 

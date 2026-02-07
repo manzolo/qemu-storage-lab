@@ -17,11 +17,9 @@ demo_raid1() {
     # Clean environment
     demo_cleanup_start
 
-    local s
-
     # Step 1: Inspect disks
-    s=$(_next_step)
-    tutor_step "$s" "Inspect available disks" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Inspect available disks" \
         "lsblk -o NAME,SIZE,SERIAL,TYPE" \
         "Let's see which disks are available in the VM.
 vdb and vdc are the disks we'll use for RAID 1." || return 0
@@ -36,38 +34,38 @@ If one disk fails, the other has a complete copy of all data."
 --level=1 means mirror, --raid-devices=2 is the number of disks." || return 0
 
     # Step 3: Verify array
-    s=$(_next_step)
-    tutor_step "$s" "Verify array status" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify array status" \
         "cat /proc/mdstat" \
         "/proc/mdstat shows the status of all RAID arrays in the kernel.
 Look for [UU] which means both disks are Up (active)." \
         "\\[UU\\]" || return 0
 
     # Step 4: Array details
-    s=$(_next_step)
-    tutor_step "$s" "RAID array details" \
+    _next_step
+    tutor_step "$STEP_COUNT" "RAID array details" \
         "sudo mdadm --detail /dev/md0" \
         "mdadm --detail shows detailed information about the array:
 RAID level, state, number of disks, size, etc." \
         "raid1" || return 0
 
     # Step 5: Create filesystem
-    s=$(_next_step)
-    tutor_step "$s" "Create ext4 filesystem" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Create ext4 filesystem" \
         "sudo mkfs.ext4 -F /dev/md0" \
         "We create an ext4 filesystem on the RAID array.
 The array appears as a single disk /dev/md0." || return 0
 
     # Step 6: Mount
-    s=$(_next_step)
-    tutor_step "$s" "Mount the filesystem" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Mount the filesystem" \
         "sudo mkdir -p /mnt/raid1 && sudo mount /dev/md0 /mnt/raid1" \
         "We mount the RAID array on /mnt/raid1.
 From here on we can use it like a normal directory." || return 0
 
     # Step 7: Write data
-    s=$(_next_step)
-    tutor_step "$s" "Write test data" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Write test data" \
         "echo 'important data on RAID 1 mirror' | sudo tee /mnt/raid1/test.txt" \
         "We write a test file. This data will be automatically
 copied to both disks by the RAID controller." || return 0
@@ -94,8 +92,8 @@ Here we simulate the failure with mdadm --fail."
 RAID 1 will continue working with the healthy disk only." || return 0
 
     # Step 10: Verify degraded
-    s=$(_next_step)
-    tutor_step "$s" "Verify degraded state" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify degraded state" \
         "cat /proc/mdstat" \
         "The array should now show [U_] — one disk Up, one missing.
 The array is degraded but still functional!" \
@@ -105,16 +103,16 @@ The array is degraded but still functional!" \
 This is the advantage of RAID 1: fault tolerance."
 
     # Step 11: Verify data still OK
-    s=$(_next_step)
-    tutor_step "$s" "Verify data is still accessible" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify data is still accessible" \
         "cat /mnt/raid1/test.txt" \
         "Even with a failed disk, our data is still accessible.
 RAID serves data from the working disk." \
         "important data" || return 0
 
     # Step 12: Remove failed disk
-    s=$(_next_step)
-    tutor_step "$s" "Remove failed disk from array" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Remove failed disk from array" \
         "sudo mdadm /dev/md0 --remove /dev/vdc" \
         "We remove the failed disk from the array.
 On a real server, you would now physically remove the disk." || return 0
@@ -129,8 +127,8 @@ Here we simulate a new disk by zeroing the first few MB."
 This removes any residual RAID metadata." || return 0
 
     # Step 14: Add disk
-    s=$(_next_step)
-    tutor_step "$s" "Add new disk to array" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Add new disk to array" \
         "sudo mdadm /dev/md0 --add /dev/vdc" \
         "We add the 'new' disk to the array.
 The rebuild (reconstruction) will start automatically." || return 0
@@ -159,16 +157,16 @@ When finished, it will return to [UU] — both disks Up." || return 0
     done
 
     # Step 16: Verify integrity
-    s=$(_next_step)
-    tutor_step "$s" "Verify data integrity after rebuild" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Verify data integrity after rebuild" \
         "cat /mnt/raid1/test.txt" \
         "After the rebuild, we verify the data is still intact.
 The file must be identical to what we wrote initially." \
         "important data" || return 0
 
     # Step 17: Cleanup
-    s=$(_next_step)
-    tutor_step "$s" "Cleanup — unmount and destroy array" \
+    _next_step
+    tutor_step "$STEP_COUNT" "Cleanup — unmount and destroy array" \
         "sudo umount /mnt/raid1 && sudo mdadm --stop /dev/md0 && sudo mdadm --zero-superblock /dev/vdb /dev/vdc 2>/dev/null; echo 'Cleanup complete'" \
         "Clean up everything: unmount the filesystem, stop the array
 and clear RAID metadata from the disks." || return 0

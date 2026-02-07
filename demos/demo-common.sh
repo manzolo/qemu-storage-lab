@@ -221,5 +221,4 @@ tutor_step() {
 # ──────────────────────────────────────────────────────────────
 _next_step() {
     STEP_COUNT=$(( STEP_COUNT + 1 ))
-    echo "$STEP_COUNT"
 }
