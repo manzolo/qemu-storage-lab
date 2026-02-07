@@ -18,17 +18,19 @@ source "$SCRIPT_DIR/vm-manager.sh"
 _raid_ensure_vm() {
     if ! vm_is_running; then
         error "VM is not running. Start it from the VM Management menu."
+        pause
         return 1
     fi
     if ! ssh_check; then
         error "VM is running but SSH is not reachable."
+        pause
         return 1
     fi
 }
 
 # ── RAID 1 Lab (mirror) ──
 raid_lab_raid1() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Create RAID 1 (Mirror) with /dev/vdb + /dev/vdc"
 
@@ -76,7 +78,7 @@ EOF
 
 # ── RAID 0 Lab (stripe) ──
 raid_lab_raid0() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Create RAID 0 (Stripe) with /dev/vdb + /dev/vdc"
 
@@ -119,7 +121,7 @@ EOF
 
 # ── RAID 5 Lab (striping + parity) ──
 raid_lab_raid5() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Create RAID 5 (Striping+Parity) with /dev/vdb + /dev/vdc + /dev/vdd"
 
@@ -169,7 +171,7 @@ EOF
 
 # ── RAID 10 Lab (mirror + stripe) ──
 raid_lab_raid10() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Create RAID 10 (Mirror+Stripe) with 4 disks"
 
@@ -212,7 +214,7 @@ EOF
 
 # ── RAID Status ──
 raid_lab_status() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "RAID Array Status"
 
@@ -241,7 +243,7 @@ raid_lab_status() {
 
 # ── Simulate Disk Failure ──
 raid_lab_fail_disk() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Simulate Disk Failure"
 
@@ -289,7 +291,7 @@ EOF
 
 # ── Remove Failed Disk ──
 raid_lab_remove_disk() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Remove Failed Disk from Array"
 
@@ -333,7 +335,7 @@ EOF
 
 # ── Replace & Rebuild ──
 raid_lab_replace_disk() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Lab: Replace Disk & Rebuild Array"
 
@@ -398,7 +400,7 @@ EOF
 
 # ── Destroy RAID Arrays ──
 raid_lab_destroy() {
-    _raid_ensure_vm || return 1
+    _raid_ensure_vm || return 0
 
     section "Destroy All RAID Arrays"
 

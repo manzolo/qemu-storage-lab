@@ -193,7 +193,7 @@ theory_combined() {
   │                 ▼                                      │
   │    ┌──────────────────────┐                            │
   │    │  Volume Group "vg0"  │        LVM VG              │
-  │    │  (PV: md0 + md1)    │        (flexibility)        │
+  │    │  (PV: md0 + md1)     │        (flexibility)       │
   │    └──────┬───────┬───────┘                            │
   │           ▼       ▼                                    │
   │    ┌─────────┐ ┌─────────┐                             │

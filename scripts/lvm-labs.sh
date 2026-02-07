@@ -18,17 +18,19 @@ source "$SCRIPT_DIR/vm-manager.sh"
 _lvm_ensure_vm() {
     if ! vm_is_running; then
         error "VM is not running. Start it from the VM Management menu."
+        pause
         return 1
     fi
     if ! ssh_check; then
         error "VM is running but SSH is not reachable."
+        pause
         return 1
     fi
 }
 
 # ── Basic LVM Lab ──
 lvm_lab_basic() {
-    _lvm_ensure_vm || return 1
+    _lvm_ensure_vm || return 0
 
     section "Lab: Basic LVM — PV → VG → LV"
 
@@ -84,7 +86,7 @@ EOF
 
 # ── LVM Resize Lab ──
 lvm_lab_resize() {
-    _lvm_ensure_vm || return 1
+    _lvm_ensure_vm || return 0
 
     section "Lab: Resize a Logical Volume (Live!)"
 
@@ -127,7 +129,7 @@ EOF
 
 # ── LVM on RAID Lab ──
 lvm_lab_on_raid() {
-    _lvm_ensure_vm || return 1
+    _lvm_ensure_vm || return 0
 
     section "Lab: LVM on top of RAID"
 
@@ -184,7 +186,7 @@ EOF
 
 # ── LVM Cleanup ──
 lvm_lab_cleanup() {
-    _lvm_ensure_vm || return 1
+    _lvm_ensure_vm || return 0
 
     section "Clean Up All LVM Configuration"
 
