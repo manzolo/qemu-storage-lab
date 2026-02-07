@@ -8,6 +8,7 @@ Everything runs inside a disposable VM — your host system is never touched.
 - **RAID Labs** — Create, inspect, break and rebuild RAID 0, 1, 5, 10 arrays
 - **LVM Labs** — Physical Volumes, Volume Groups, Logical Volumes, live resize
 - **LVM on RAID** — Production-style architecture: RAID for redundancy + LVM for flexibility
+- **Guided Demos** — Interactive step-by-step tutorials: run each command with Enter, skip with `s`, quit with `q`
 - **Theory sections** — Built-in explanations of every concept
 - **Automated test suite** — Non-interactive tests for every scenario, CI-ready
 
@@ -57,7 +58,8 @@ All data disks are disposable qcow2 images. You can destroy and recreate them at
   4) RAID Labs (mdadm)
   5) LVM Labs
   6) Theory & Documentation
-  7) Full Reset (destroy everything)
+  7) Guided Demos (Interactive Tutorials)
+  8) Full Reset (destroy everything)
   0) Exit
 ```
 
@@ -79,6 +81,24 @@ Each lab includes: create array, format, mount, write/read data, simulate failur
 | Basic LVM | PV → VG → LV → filesystem → mount |
 | Resize | Live extend LV + resize2fs (no downtime) |
 | LVM on RAID | RAID 1 → PV → VG → LV (production pattern) |
+
+### Guided Demos
+
+Interactive, step-by-step tutorials that explain each command before running it. The user controls execution: press **Enter** to run, **s** to skip, **q** to quit.
+
+| Demo | Description |
+|------|-------------|
+| RAID 1 | Mirror: create → write data → simulate failure → rebuild → verify integrity |
+| RAID 5 | Parity: create → write data → simulate failure → rebuild → verify integrity |
+| RAID 10 | Mirror+Stripe: create → write data → simulate failure → rebuild → verify integrity |
+| LVM | PV → VG → LV → filesystem → live resize → reverse cleanup |
+| LVM on RAID | Production pattern: RAID 1 → PV → VG → LV → full stack overview → cleanup |
+
+Each demo starts with an automatic cleanup, includes educational notes between steps, and verifies expected results.
+
+## Cheat Sheet
+
+See [docs/cheatsheet.md](docs/cheatsheet.md) for a quick reference of all mdadm and LVM commands.
 
 ## Test Suite
 
@@ -121,6 +141,13 @@ See [`.github/workflows/test-raid.yml`](.github/workflows/test-raid.yml).
 qemu-storage-lab/
 ├── storage-lab.sh              # Main entry point (interactive menu)
 ├── lab.conf                    # Optional: override defaults (VM_RAM, ports, etc.)
+├── demos/
+│   ├── demo-common.sh          # Shared interactive demo framework
+│   ├── demo-raid1.sh           # RAID 1 guided tutorial
+│   ├── demo-raid5.sh           # RAID 5 guided tutorial
+│   ├── demo-raid10.sh          # RAID 10 guided tutorial
+│   ├── demo-lvm.sh             # LVM guided tutorial
+│   └── demo-lvm-on-raid.sh     # LVM on RAID guided tutorial
 ├── scripts/
 │   ├── config.sh               # Configuration, colors, logging utilities
 │   ├── disk-manager.sh         # Create/delete/list qcow2 disk images

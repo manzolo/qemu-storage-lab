@@ -25,6 +25,12 @@ source "$PROJECT_DIR/scripts/ssh-utils.sh"
 source "$PROJECT_DIR/scripts/theory.sh"
 source "$PROJECT_DIR/scripts/raid-labs.sh"
 source "$PROJECT_DIR/scripts/lvm-labs.sh"
+source "$PROJECT_DIR/demos/demo-common.sh"
+source "$PROJECT_DIR/demos/demo-raid1.sh"
+source "$PROJECT_DIR/demos/demo-raid5.sh"
+source "$PROJECT_DIR/demos/demo-raid10.sh"
+source "$PROJECT_DIR/demos/demo-lvm.sh"
+source "$PROJECT_DIR/demos/demo-lvm-on-raid.sh"
 
 # ── Check for leftover VM ──
 if vm_is_running; then
@@ -41,8 +47,8 @@ show_banner() {
     echo -e "${BOLD}${CYAN}"
     cat << 'EOF'
   ╔══════════════════════════════════════════════════════╗
-  ║           QEMU STORAGE LAB                          ║
-  ║       Learn RAID & LVM hands-on                     ║
+  ║           QEMU STORAGE LAB                           ║
+  ║       Learn RAID & LVM hands-on                      ║
   ╚══════════════════════════════════════════════════════╝
 EOF
     echo -e "${RESET}"
@@ -61,11 +67,12 @@ menu_main() {
         echo "  4) RAID Labs (mdadm)"
         echo "  5) LVM Labs"
         echo "  6) Theory & Documentation"
-        echo "  7) Full Reset (destroy everything)"
+        echo "  7) Guided Demos (Interactive Tutorials)"
+        echo "  8) Full Reset (destroy everything)"
         echo "  0) Exit"
         hr
         echo ""
-        echo -n "  Choose [0-7]: "
+        echo -n "  Choose [0-8]: "
         read -r choice
 
         case "$choice" in
@@ -75,7 +82,8 @@ menu_main() {
             4) menu_raid ;;
             5) menu_lvm ;;
             6) menu_theory ;;
-            7) full_reset ;;
+            7) menu_demos ;;
+            8) full_reset ;;
             0) echo ""; info "Goodbye!"; exit 0 ;;
             *) warn "Invalid option." ; sleep 1 ;;
         esac
@@ -283,6 +291,36 @@ menu_theory() {
             2) theory_lvm ;;
             3) theory_combined ;;
             4) theory_disk_naming ;;
+            0) return ;;
+            *) warn "Invalid option." ; sleep 1 ;;
+        esac
+    done
+}
+
+# ── Guided Demos Sub-menu ──
+menu_demos() {
+    while true; do
+        clear
+        show_banner
+        echo -e "${BOLD}  Guided Demos (Interactive Tutorials)${RESET}"
+        hr
+        echo "  1) RAID 1  — Mirror: create, fail, rebuild"
+        echo "  2) RAID 5  — Parity: create, fail, rebuild"
+        echo "  3) RAID 10 — Mirror+Stripe: create, fail, rebuild"
+        echo "  4) LVM     — PV, VG, LV, resize"
+        echo "  5) LVM on RAID — Production pattern"
+        echo "  0) Back"
+        hr
+        echo ""
+        echo -n "  Choose [0-5]: "
+        read -r choice
+
+        case "$choice" in
+            1) demo_raid1 ;;
+            2) demo_raid5 ;;
+            3) demo_raid10 ;;
+            4) demo_lvm ;;
+            5) demo_lvm_on_raid ;;
             0) return ;;
             *) warn "Invalid option." ; sleep 1 ;;
         esac
