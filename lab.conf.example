@@ -1,0 +1,12 @@
+# QEMU Storage Lab Configuration
+# Edit these values to match your hardware/preferences
+
+VM_RAM="1024"              # MB — minimum viable
+VM_CPUS="1"                # cores
+VM_SSH_PORT="2222"         # host port forwarded to guest:22
+DATA_DISK_COUNT="4"        # number of data disks
+DATA_DISK_SIZE="5G"        # size of each data disk
+OS_DISK_SIZE="10G"         # OS disk size
+CLOUD_IMAGE_URL="https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+VM_USER="lab"              # guest SSH user
+VM_PASS="lab"              # guest SSH password

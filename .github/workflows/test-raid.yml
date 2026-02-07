@@ -1,0 +1,26 @@
+name: RAID/LVM Lab Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-x86 qemu-utils sshpass cloud-image-utils
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666"' | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Cache cloud image
+        uses: actions/cache@v4
+        with:
+          path: disks/ubuntu-cloud.img
+          key: ubuntu-cloud-24.04
+
+      - name: Run tests
+        run: ./tests/run-all-tests.sh

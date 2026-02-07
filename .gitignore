@@ -1,0 +1,18 @@
+# Disk images (large, generated)
+disks/*.qcow2
+disks/*.img
+disks/*.iso
+
+# Logs
+logs/*.log
+
+# VM runtime files
+vm.pid
+vm.sock
+
+# Cloud-init generated files
+cloud-init/user-data
+cloud-init/meta-data
+
+# User config (use lab.conf.example as template)
+lab.conf
